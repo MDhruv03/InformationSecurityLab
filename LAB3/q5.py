@@ -1,7 +1,7 @@
 from Crypto.Util.number import getPrime
 import random, time
 
-def diffie_hellman_key_exchange(bits=256):
+def diffie_hellman_key_exchange(bits=2048):
     p = getPrime(bits)
     g = 2  # generator
 

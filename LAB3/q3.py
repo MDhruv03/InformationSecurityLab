@@ -2,7 +2,7 @@ from Crypto.Util.number import getPrime, inverse, bytes_to_long, long_to_bytes
 import random
 
 # Key generation
-def elgamal_keygen(bits=256):
+def elgamal_keygen(bits=2048):
     p = getPrime(bits)
     g = random.randrange(2, p - 1)
     x = random.randrange(1, p - 2)  # private key
@@ -35,4 +35,5 @@ cipher = elgamal_encrypt(pk, msg)
 decrypted = elgamal_decrypt(sk, pk, cipher)
 
 print("Original:", msg)
+print("Cipher:", cipher)
 print("Decrypted:", decrypted)

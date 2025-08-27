@@ -1,259 +1,73 @@
-# DES implementation without libraries
+# Minimal DES (no external libs) - educational
 
-# Tables used in DES
+# Tables
+IP=[58,50,42,34,26,18,10,2,60,52,44,36,28,20,12,4,62,54,46,38,30,22,14,6,64,56,48,40,32,24,16,8,
+    57,49,41,33,25,17,9,1,59,51,43,35,27,19,11,3,61,53,45,37,29,21,13,5,63,55,47,39,31,23,15,7]
+FP=[40,8,48,16,56,24,64,32,39,7,47,15,55,23,63,31,38,6,46,14,54,22,62,30,37,5,45,13,53,21,61,29,
+    36,4,44,12,52,20,60,28,35,3,43,11,51,19,59,27,34,2,42,10,50,18,58,26,33,1,41,9,49,17,57,25]
+E=[32,1,2,3,4,5,4,5,6,7,8,9,8,9,10,11,12,13,12,13,14,15,16,17,16,17,18,19,20,21,20,21,22,23,24,25,
+   24,25,26,27,28,29,28,29,30,31,32,1]
+P=[16,7,20,21,29,12,28,17,1,15,23,26,5,18,31,10,2,8,24,14,32,27,3,9,19,13,30,6,22,11,4,25]
+PC1=[57,49,41,33,25,17,9,1,58,50,42,34,26,18,10,2,59,51,43,35,27,19,11,3,60,52,44,36,63,55,47,39,
+     31,23,15,7,62,54,46,38,30,22,14,6,61,53,45,37,29,21,13,5,28,20,12,4]
+PC2=[14,17,11,24,1,5,3,28,15,6,21,10,23,19,12,4,26,8,16,7,27,20,13,2,41,52,31,37,47,55,30,40,51,
+     45,33,48,44,49,39,56,34,53,46,42,50,36,29,32]
+SH=[1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1]
 
-# Initial Permutation Table
-IP = [58, 50, 42, 34, 26, 18, 10, 2,
-      60, 52, 44, 36, 28, 20, 12, 4,
-      62, 54, 46, 38, 30, 22, 14, 6,
-      64, 56, 48, 40, 32, 24, 16, 8,
-      57, 49, 41, 33, 25, 17, 9, 1,
-      59, 51, 43, 35, 27, 19, 11, 3,
-      61, 53, 45, 37, 29, 21, 13, 5,
-      63, 55, 47, 39, 31, 23, 15, 7]
+# 8 S-boxes
+S=[[[14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7],[0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8],[4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0],[15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13]],
+   [[15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10],[3,13,4,7,15,2,8,14,12,0,1,10,6,9,11,5],[0,14,7,11,10,4,13,1,5,8,12,6,9,3,2,15],[13,8,10,1,3,15,4,2,11,6,7,12,0,5,14,9]],
+   [[10,0,9,14,6,3,15,5,1,13,12,7,11,4,2,8],[13,7,0,9,3,4,6,10,2,8,5,14,12,11,15,1],[13,6,4,9,8,15,3,0,11,1,2,12,5,10,14,7],[1,10,13,0,6,9,8,7,4,15,14,3,11,5,2,12]],
+   [[7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15],[13,8,11,5,6,15,0,3,4,7,2,12,1,10,14,9],[10,6,9,0,12,11,7,13,15,1,3,14,5,2,8,4],[3,15,0,6,10,1,13,8,9,4,5,11,12,7,2,14]],
+   [[2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9],[14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6],[4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14],[11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3]],
+   [[12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11],[10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8],[9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6],[4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13]],
+   [[4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1],[13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6],[1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2],[6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12]],
+   [[13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7],[1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2],[7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8],[2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11]]]
 
-# Final Permutation Table (IP^-1)
-FP = [40, 8, 48, 16, 56, 24, 64, 32,
-      39, 7, 47, 15, 55, 23, 63, 31,
-      38, 6, 46, 14, 54, 22, 62, 30,
-      37, 5, 45, 13, 53, 21, 61, 29,
-      36, 4, 44, 12, 52, 20, 60, 28,
-      35, 3, 43, 11, 51, 19, 59, 27,
-      34, 2, 42, 10, 50, 18, 58, 26,
-      33, 1, 41, 9, 49, 17, 57, 25]
+# Helpers
+perm=lambda b,t:[b[x-1] for x in t]
+xor=lambda a,b:[i^j for i,j in zip(a,b)]
+shift=lambda l,n:l[n:]+l[:n]
+to_bits=lambda s:[int(b) for ch in s for b in bin(ord(ch))[2:].rjust(8,'0')]
+to_str=lambda b:"".join(chr(int("".join(map(str,b[i:i+8])),2)) for i in range(0,len(b),8))
 
-# Expansion table (32 bits to 48 bits)
-E = [32, 1, 2, 3, 4, 5,
-     4, 5, 6, 7, 8, 9,
-     8, 9, 10, 11, 12, 13,
-     12, 13, 14, 15, 16, 17,
-     16, 17, 18, 19, 20, 21,
-     20, 21, 22, 23, 24, 25,
-     24, 25, 26, 27, 28, 29,
-     28, 29, 30, 31, 32, 1]
-
-# S-boxes (8 boxes)
-S_BOX = [
-# S1
-[[14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7],
- [0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8],
- [4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0],
- [15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13]],
-
-# S2
-[[15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10],
- [3,13,4,7,15,2,8,14,12,0,1,10,6,9,11,5],
- [0,14,7,11,10,4,13,1,5,8,12,6,9,3,2,15],
- [13,8,10,1,3,15,4,2,11,6,7,12,0,5,14,9]],
-
-# S3
-[[10,0,9,14,6,3,15,5,1,13,12,7,11,4,2,8],
- [13,7,0,9,3,4,6,10,2,8,5,14,12,11,15,1],
- [13,6,4,9,8,15,3,0,11,1,2,12,5,10,14,7],
- [1,10,13,0,6,9,8,7,4,15,14,3,11,5,2,12]],
-
-# S4
-[[7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15],
- [13,8,11,5,6,15,0,3,4,7,2,12,1,10,14,9],
- [10,6,9,0,12,11,7,13,15,1,3,14,5,2,8,4],
- [3,15,0,6,10,1,13,8,9,4,5,11,12,7,2,14]],
-
-# S5
-[[2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9],
- [14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6],
- [4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14],
- [11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3]],
-
-# S6
-[[12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11],
- [10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8],
- [9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6],
- [4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13]],
-
-# S7
-[[4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1],
- [13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6],
- [1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2],
- [6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12]],
-
-# S8
-[[13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7],
- [1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2],
- [7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8],
- [2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11]]
-]
-
-# Permutation P after S-box substitution
-P = [16, 7, 20, 21,
-     29, 12, 28, 17,
-     1, 15, 23, 26,
-     5, 18, 31, 10,
-     2, 8, 24, 14,
-     32, 27, 3, 9,
-     19, 13, 30, 6,
-     22, 11, 4, 25]
-
-# PC-1: Permuted Choice 1 for key schedule (56 bits from 64)
-PC_1 = [57, 49, 41, 33, 25, 17, 9,
-        1, 58, 50, 42, 34, 26, 18,
-        10, 2, 59, 51, 43, 35, 27,
-        19, 11, 3, 60, 52, 44, 36,
-        63, 55, 47, 39, 31, 23, 15,
-        7, 62, 54, 46, 38, 30, 22,
-        14, 6, 61, 53, 45, 37, 29,
-        21, 13, 5, 28, 20, 12, 4]
-
-# PC-2: Permuted Choice 2 for key schedule (48 bits from 56)
-PC_2 = [14, 17, 11, 24, 1, 5,
-        3, 28, 15, 6, 21, 10,
-        23, 19, 12, 4, 26, 8,
-        16, 7, 27, 20, 13, 2,
-        41, 52, 31, 37, 47, 55,
-        30, 40, 51, 45, 33, 48,
-        44, 49, 39, 56, 34, 53,
-        46, 42, 50, 36, 29, 32]
-
-# Number of left shifts for each round
-SHIFT_SCHEDULE = [1, 1, 2, 2, 2, 2, 2, 2,
-                  1, 2, 2, 2, 2, 2, 2, 1]
-
-# Helper functions
-
-def str_to_bit_array(text):
-    array = []
-    for char in text:
-        binval = bin(ord(char))[2:].rjust(8, '0')
-        array.extend([int(x) for x in binval])
-    return array
-
-def bit_array_to_str(array):
-    res = ''
-    for i in range(0, len(array), 8):
-        byte = array[i:i+8]
-        s = ''.join([str(bit) for bit in byte])
-        res += chr(int(s, 2))
-    return res
-
-def permute(block, table):
-    return [block[x-1] for x in table]
-
-def left_shift(bits, n):
-    return bits[n:] + bits[:n]
-
-def xor(t1, t2):
-    return [x ^ y for x, y in zip(t1, t2)]
-
-def sbox_substitution(expanded_half_block):
-    output = []
+def sbox(b):
+    out=[]
     for i in range(8):
-        block = expanded_half_block[i*6:(i+1)*6]
-        row = (block[0] << 1) + block[5]
-        col = (block[1] << 3) + (block[2] << 2) + (block[3] << 1) + block[4]
-        val = S_BOX[i][row][col]
-        binval = bin(val)[2:].rjust(4, '0')
-        output.extend([int(b) for b in binval])
-    return output
+        blk=b[i*6:(i+1)*6];row=(blk[0]<<1)+blk[5];col=(blk[1]<<3)+(blk[2]<<2)+(blk[3]<<1)+blk[4]
+        out+=[int(x) for x in bin(S[i][row][col])[2:].rjust(4,'0')]
+    return out
 
-def generate_keys(key_bits):
-    # Apply PC-1 permutation
-    key = permute(key_bits, PC_1)
-    # Split into left and right halves
-    left, right = key[:28], key[28:]
-    round_keys = []
-    for shift in SHIFT_SCHEDULE:
-        left = left_shift(left, shift)
-        right = left_shift(right, shift)
-        combined = left + right
-        round_key = permute(combined, PC_2)
-        round_keys.append(round_key)
-    return round_keys
+def keys(k):
+    k=perm(k,PC1);L,R=k[:28],k[28:];ks=[]
+    for s in SH:
+        L,R=shift(L,s),shift(R,s);ks.append(perm(L+R,PC2))
+    return ks
 
-def des_round(left, right, round_key):
-    # Expansion from 32 to 48 bits
-    expanded_right = permute(right, E)
-    # XOR with round key
-    xor_result = xor(expanded_right, round_key)
-    # S-box substitution
-    sbox_result = sbox_substitution(xor_result)
-    # Permutation P
-    p_result = permute(sbox_result, P)
-    # XOR with left half
-    new_right = xor(left, p_result)
-    return right, new_right
+def roundF(L,R,K): return R, xor(L,perm(sbox(xor(perm(R,E),K)),P))
 
-def des_encrypt_block(block, keys):
-    block = permute(block, IP)
-    left, right = block[:32], block[32:]
-    for i in range(16):
-        left, right = des_round(left, right, keys[i])
-    # Combine halves in reverse order
-    combined = right + left
-    encrypted_block = permute(combined, FP)
-    return encrypted_block
+def crypt(m,k,dec=False):
+    m=perm(m,IP);L,R=m[:32],m[32:];ks=keys(k)
+    for i in (range(15,-1,-1) if dec else range(16)): L,R=roundF(L,R,ks[i])
+    return perm(R+L,FP)
 
-def des_decrypt_block(block, keys):
-    block = permute(block, IP)
-    left, right = block[:32], block[32:]
-    for i in range(15, -1, -1):
-        left, right = des_round(left, right, keys[i])
-    combined = right + left
-    decrypted_block = permute(combined, FP)
-    return decrypted_block
+# Padding
+pad=lambda s:s+(chr(8-len(s)%8)*(8-len(s)%8))
+unpad=lambda s:s[:-ord(s[-1])]
 
-# Padding to multiple of 8 bytes (64 bits)
-def pad_text(text):
-    pad_len = 8 - (len(text) % 8)
-    return text + chr(pad_len) * pad_len
+# Encrypt/decrypt full strings
+def des_enc(msg,key): 
+    b,to=to_bits(pad(msg)),to_bits(key);ks=keys(to);out=[]
+    for i in range(0,len(b),64): out+=crypt(b[i:i+64],to)
+    return out
 
-def unpad_text(text):
-    pad_len = ord(text[-1])
-    return text[:-pad_len]
+def des_dec(bits,key): 
+    to=to_bits(key);out=[]
+    for i in range(0,len(bits),64): out+=crypt(bits[i:i+64],to,dec=True)
+    return unpad(to_str(out))
 
-# Main functions to encrypt/decrypt message
-
-def des_encrypt(message, key):
-    message = pad_text(message)
-    message_bits = str_to_bit_array(message)
-    key_bits = str_to_bit_array(key)
-    keys = generate_keys(key_bits)
-    encrypted_bits = []
-    for i in range(0, len(message_bits), 64):
-        block = message_bits[i:i+64]
-        encrypted_block = des_encrypt_block(block, keys)
-        encrypted_bits.extend(encrypted_block)
-    return encrypted_bits
-
-def des_decrypt(cipher_bits, key):
-    key_bits = str_to_bit_array(key)
-    keys = generate_keys(key_bits)
-    decrypted_bits = []
-    for i in range(0, len(cipher_bits), 64):
-        block = cipher_bits[i:i+64]
-        decrypted_block = des_decrypt_block(block, keys)
-        decrypted_bits.extend(decrypted_block)
-    decrypted_text = bit_array_to_str(decrypted_bits)
-    decrypted_text = unpad_text(decrypted_text)
-    return decrypted_text
-
-# Your inputs
-message = "Confidential Data"
-key = "A1B2C3D4"
-
-# Encrypt
-cipher_bits = des_encrypt(message, key)
-
-# For display, convert bits to hex
-def bits_to_hex(bits):
-    hex_str = ''
-    for i in range(0, len(bits), 4):
-        nibble = bits[i:i+4]
-        val = int(''.join(str(b) for b in nibble), 2)
-        hex_str += hex(val)[2:]
-    return hex_str.upper()
-
-cipher_hex = bits_to_hex(cipher_bits)
-print(f"Ciphertext (hex): {cipher_hex}")
-
-# Decrypt
-decrypted_message = des_decrypt(cipher_bits, key)
-print(f"Decrypted message: {decrypted_message}")
+# Example
+msg,key="Confidential Data","A1B2C3D4"
+c=des_enc(msg,key)
+print("Cipher (hex):","".join(hex(int("".join(map(str,c[i:i+4])),2))[2:].upper() for i in range(0,len(c),4)))
+print("Decrypted:",des_dec(c,key))
