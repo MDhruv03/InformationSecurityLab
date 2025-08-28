@@ -71,3 +71,25 @@ msg,key="Confidential Data","A1B2C3D4"
 c=des_enc(msg,key)
 print("Cipher (hex):","".join(hex(int("".join(map(str,c[i:i+4])),2))[2:].upper() for i in range(0,len(c),4)))
 print("Decrypted:",des_dec(c,key))
+
+
+
+#Library Code
+# from Crypto.Cipher import DES
+# from Crypto.Util.Padding import pad, unpad
+
+# key = b'A1B2C3D4'
+
+# pt = "Confidential Data"
+# print(f"Plaintext: {pt}")
+# cipher = DES.new(key, DES.MODE_ECB)
+
+# p = pad(pt.encode(), DES.block_size)
+# print(f"Padded Message (bytes): {p}")
+# ct = cipher.encrypt(p)
+# print(f"Ciphertext (bytes): {ct}")
+
+# mes = unpad(cipher.decrypt(ct), DES.block_size).decode()
+# print(f"Decrypted Message: {mes}")
+
+# print(f"\nVerification: {pt == mes}")
