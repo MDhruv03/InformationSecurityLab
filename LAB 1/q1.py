@@ -44,7 +44,7 @@ def decrypt(msg,key,choice):
         else:
             result += ch
     return result
-
+    
 def menu():
     message="I am learning information security"
     message=clean(message)
